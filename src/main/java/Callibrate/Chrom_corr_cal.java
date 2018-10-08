@@ -19,8 +19,14 @@ package Callibrate;
 import Classes.*;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import net.imagej.ImageJ;
-
+import org.json.*;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.command.Previewable;
@@ -28,6 +34,7 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.widget.Button;
+import org.scijava.widget.FileWidget;
 
 /**
  * Fits the affine transform to two csv-files of for example multi-colored beads
@@ -48,11 +55,11 @@ public class Chrom_corr_cal implements Command, Previewable {
     @Parameter(label = "Positions 2", description = "csv file 2", style = "open")
     private File csvfile2;
     
-    @Parameter(label = "Fit Affine Transformation", callback = "fitaffine")
-    private Button FitAffine;
+    @Parameter (style = FileWidget.DIRECTORY_STYLE, label = "Output folder")
+    private File out_folder; 
     
-    @Parameter(label = "Affine Transformation")
-    private String Affine;
+    @Parameter(label = "Wavelength [nm]", description = "Wavelength [nm]", style = "open")
+    private Long wavelength;
 
     public static void main(final String... args) throws Exception {
         // Launch ImageJ as usual.
@@ -64,7 +71,36 @@ public class Chrom_corr_cal implements Command, Previewable {
 
     @Override
     public void run() {
-
+        csvread file1 = new csvread(csvfile1);
+        csvread file2 = new csvread(csvfile2);
+        double[] x1 = file1.getdata("x [nm]");
+        double[] y1 = file1.getdata("y [nm]");
+        double[] x2 = file2.getdata("x [nm]");
+        double[] y2 = file2.getdata("y [nm]");
+        AffineTransform atrans = new AffineTransform();
+        atrans.loadpositions(x1, y1, x2, y2);
+        //Affine = atrans.getAffineS();
+        double[][] affine = atrans.getAffine();
+        JSONObject JObj = new JSONObject();
+        JObj.put("File1",csvfile1.toString());
+        JObj.put("File2",csvfile2.toString());
+        JObj.put("Wavelength[nm]",wavelength);
+        JSONArray JArr = new JSONArray();
+        for (int i = 0;i<3;i++){
+            for (int j = 0;j<2;j++){
+                JArr.put(affine[i][j]);
+            }
+        }
+        JObj.put("Values", JArr);
+        
+        Path out_file = Paths.get(out_folder.toString(),"AffineTransform"+wavelength.toString()+".json");
+        try {
+            FileWriter fileWriter = new FileWriter(out_file.toString());
+            fileWriter.write(JObj.toString());
+            fileWriter.close();
+        } catch (IOException ex) {
+            Logger.getLogger(Chrom_corr_cal.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -75,17 +111,5 @@ public class Chrom_corr_cal implements Command, Previewable {
     @Override
     public void preview() {
         log.info("Preview");
-    }
-    
-    public void fitaffine() {
-        csvread file1 = new csvread(csvfile1);
-        csvread file2 = new csvread(csvfile2);
-        double[] x1 = file1.getdata("x [nm]");
-        double[] y1 = file1.getdata("y [nm]");
-        double[] x2 = file2.getdata("x [nm]");
-        double[] y2 = file2.getdata("y [nm]");
-        AffineTransform atrans = new AffineTransform();
-        atrans.loadpositions(x1, y1, x2, y2);
-        Affine = atrans.getAffineS();
     }
 }
