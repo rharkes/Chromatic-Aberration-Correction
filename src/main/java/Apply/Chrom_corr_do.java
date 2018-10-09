@@ -17,17 +17,10 @@
 package Apply;
 
 import Classes.*;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.imagej.ImageJ;
@@ -71,10 +64,21 @@ public class Chrom_corr_do implements Command, Previewable {
         ij.command().run(Chrom_corr_do.class, true);
     }
     
-    static String readFile(String path, Charset encoding)
-            throws IOException {
-        byte[] encoded = Files.readAllBytes(Paths.get(path));
-        return new String(encoded, encoding);
+    static String readFile(String fileName) throws IOException {
+        BufferedReader br = new BufferedReader(new FileReader(fileName));
+        try {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append("\n");
+                line = br.readLine();
+            }
+            return sb.toString();
+        } finally {
+            br.close();
+        }
     }
     @Override
     public void run() {
@@ -82,7 +86,7 @@ public class Chrom_corr_do implements Command, Previewable {
             csvread file1 = new csvread(csvfile1);
             double[] x1 = file1.getdata("x [nm]");
             double[] y1 = file1.getdata("y [nm]");
-            JSONObject JObj = new JSONObject(readFile(affine_file.toString(),StandardCharsets.UTF_8));
+            JSONObject JObj = new JSONObject(readFile(affine_file.toString()));
             JSONArray JArr = JObj.getJSONArray("Values");
             double[][] affine = new double[3][2];
             for (int i = 0;i<3;i++){

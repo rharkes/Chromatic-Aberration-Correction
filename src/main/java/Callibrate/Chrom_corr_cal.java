@@ -21,22 +21,20 @@ import Classes.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.imagej.ImageJ;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.command.Previewable;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.widget.Button;
 import org.scijava.widget.FileWidget;
 
 /**
@@ -98,12 +96,11 @@ public class Chrom_corr_cal implements Command, Previewable {
             }
         }
         JObj.put("Values", JArr);
-        
-        Path out_file = Paths.get(out_folder.toString(),"AffineTransform"+wavelength.toString()+".json");
+        File out_file = new File(out_folder,"AffineTransform"+wavelength.toString()+".json");
         try {
-            FileWriter fileWriter = new FileWriter(out_file.toString());
-            fileWriter.write(JObj.toString());
-            fileWriter.close();
+            try (FileWriter fileWriter = new FileWriter(out_file.toString())) {
+                fileWriter.write(JObj.toString());
+            }
         } catch (IOException ex) {
             Logger.getLogger(Chrom_corr_cal.class.getName()).log(Level.SEVERE, null, ex);
         }
