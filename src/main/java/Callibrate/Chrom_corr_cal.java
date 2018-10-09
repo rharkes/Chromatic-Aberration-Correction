@@ -23,6 +23,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import net.imagej.ImageJ;
@@ -85,6 +88,9 @@ public class Chrom_corr_cal implements Command, Previewable {
         JObj.put("File1",csvfile1.toString());
         JObj.put("File2",csvfile2.toString());
         JObj.put("Wavelength[nm]",wavelength);
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Date date = new Date();
+        JObj.put("Created on",dateFormat.format(date));
         JSONArray JArr = new JSONArray();
         for (int i = 0;i<3;i++){
             for (int j = 0;j<2;j++){
